@@ -1,6 +1,6 @@
 package ch.sbb.driveradvisorysystem.digitaldrivingorder.journeyplanner;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
@@ -14,7 +14,7 @@ import lombok.Value;
 public class JourneyPlanner {
 
     @NonNull
-    Date operatingDay;
+    LocalDate operatingDay;
 
     /**
      * Transmodel:: ServiceProduct::number

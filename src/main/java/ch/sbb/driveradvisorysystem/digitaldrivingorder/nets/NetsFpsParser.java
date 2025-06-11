@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +16,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class NetsFpsParser {
 
-    public static JourneyPlanner toJourneyPlanner(String filename, Date operatingDay) throws Exception {
+    public static JourneyPlanner toJourneyPlanner(String filename, LocalDate operatingDay) throws Exception {
 
         /*
          * NeTS Export für den Zug 711.
@@ -42,7 +42,7 @@ public class NetsFpsParser {
      * @param operatingDay
      * @return extract of one Train on a specific operatingDay
      */
-    private JourneyPlanner mapToJourneyPlanner(List<String[]> journeyPlanner, Date operatingDay) {
+    private JourneyPlanner mapToJourneyPlanner(List<String[]> journeyPlanner, LocalDate operatingDay) {
 
         //TODO find cells => hardcoded line 6..182 for operatingDay
         final List<ScheduledStopPoint> stopPoints = new ArrayList<>();

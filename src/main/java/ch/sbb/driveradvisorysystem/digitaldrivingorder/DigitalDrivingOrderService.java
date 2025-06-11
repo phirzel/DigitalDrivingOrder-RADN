@@ -15,8 +15,8 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -294,7 +294,7 @@ public class DigitalDrivingOrderService {
         return "";
     }
 
-    private com.itextpdf.text.Document createDocumentPDF(/*String streckenId,*/ String trainNumber, Date date) throws FileNotFoundException, DocumentException {
+    private com.itextpdf.text.Document createDocumentPDF(/*String streckenId,*/ String trainNumber, LocalDate date) throws FileNotFoundException, DocumentException {
         com.itextpdf.text.Document document = new com.itextpdf.text.Document();
         PdfWriter.getInstance(document, new FileOutputStream("target/DDO_" + /*streckenId + "_" +*/ trainNumber + "_" + date.toString() + ".pdf"));
         //document.setMargins(0,0,0,0);

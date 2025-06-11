@@ -9,7 +9,7 @@ import ch.sbb.driveradvisorysystem.digitaldrivingorder.journeyplanner.JourneyPla
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.NetsFpsParser;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Date;
+import java.time.LocalDate;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -36,7 +36,7 @@ class DigitalDrivingOrderServiceTest {
         final Document eRadn = readXML("src/main/resources/eRADN_280_20250121_083123_000_orig.xml");
         assertThat(eRadn).isNotNull();
 
-        final JourneyPlanner journeyPlanner = NetsFpsParser.toJourneyPlanner(/*"src/test/resources/*/ "NeTS-FPS_IC-1-711.csv", Date.valueOf("2024-12-17"));
+        final JourneyPlanner journeyPlanner = NetsFpsParser.toJourneyPlanner(/*"src/test/resources/*/ "NeTS-FPS_IC-1-711.csv", LocalDate.of(2024, 12, 17));
         //TODO move to NetsFpsParserTest
         assertThat(journeyPlanner.getTrainNumber()).isEqualTo("711");
         assertThat(journeyPlanner.getStopPoints()).hasSize(167);
