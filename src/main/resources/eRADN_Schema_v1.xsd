@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- W3C Schema erstellt mit XMLSpy v2018 sp1 (x64) (http://www.altova.com) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="www.qnamic.com/xml/ns/dis/sections_2_0.xsd" version="1.4">
+    <xs:import schemaLocation="eRADN-Service2.xsd"/>
+    <xs:element name="radn-daten">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="meta">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="version" type="xs:string"/>
+                            <xs:element name="export-date" type="xs:string"/>
+                            <xs:element name="export-type" type="xs:string"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="strecken">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="strecke" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="gsmNummern">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="gsmNummer"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="oertlicheGeschwindigkeiten">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="oertlicheGeschwindigkeit"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="topologie">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element ref="bpe"/>
+                            <xs:element ref="bpVerbindungen"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
