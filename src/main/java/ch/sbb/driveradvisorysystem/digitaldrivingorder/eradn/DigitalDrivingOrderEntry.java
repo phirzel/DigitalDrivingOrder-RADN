@@ -11,15 +11,16 @@ public class DigitalDrivingOrderEntry {
 
     // PDF relevant eRADN Strecke
     String fussnote;
-    String km;
-    String gefaelle;
-    String steigung;
+    Double km;
+    Integer gefaelle;
+    Integer steigung;
     String funkkanal;
     String abfahrtsErlaubnis;
     String etcs;
     String shortName;
     String name;
-    String r150;
+    String streckenR150;
+    String bahnhofR150;
 
     // PDF relevant fahrplan
     String an;
