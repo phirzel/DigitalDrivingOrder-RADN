@@ -12,7 +12,6 @@ public class DigitalDrivingOrderEntry {
     boolean klammer = false;
 
     // PDF relevant eRADN Strecke
-    String fussnote;
     Double km;
     Integer gefaelle;
     Integer steigung;
@@ -25,6 +24,8 @@ public class DigitalDrivingOrderEntry {
     String bahnhofR150;
     List<String> blocks = new ArrayList<>();
     List<String> curves = new ArrayList<>();
+    List<String> schutzstrecken = new ArrayList<>();
+    List<Footnote> footnotes = new ArrayList<>();
 
     // PDF relevant fahrplan
     String an;
