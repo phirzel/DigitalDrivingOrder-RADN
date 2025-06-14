@@ -37,7 +37,7 @@ public class RadnParser {
     public static String getR150(List<V> vitesse) {
         return vitesse.stream()
             .filter(v -> "R".equals(v.getZugreihe()) && 150 == v.getBremsverhaeltnis())
-            .map(v -> v.getGeschwindigkeit())
+            .map(V::getGeschwindigkeit)
             .findFirst()
             .orElse("");
     }

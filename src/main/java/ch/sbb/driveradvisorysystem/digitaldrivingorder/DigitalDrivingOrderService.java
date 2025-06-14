@@ -11,8 +11,8 @@ import ch.sbb.bahninfrastruktur.eradn.TeilstreckenBp;
 import ch.sbb.bahninfrastruktur.eradn.TeilstreckenBpVerbindung;
 import ch.sbb.bahninfrastruktur.eradn.TeilstreckenBpVerbindungen;
 import ch.sbb.bahninfrastruktur.eradn.TsBpvElemente;
-import ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn.DigitalDrivingOrderEntry;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn.RadnParser;
+import ch.sbb.driveradvisorysystem.digitaldrivingorder.model.DigitalDrivingOrderEntry;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.model.VehicleJourney;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.pdf.PdfHelper;
 import com.itextpdf.text.Chunk;
@@ -29,6 +29,7 @@ public class DigitalDrivingOrderService {
 
     private static final String TODO = "<TODO>";
 
+    //TODO detach data building from visualisation
     public void generatePDF(RadnDaten radnDaten, VehicleJourney vehicleJourney) throws DocumentException, FileNotFoundException {
         final com.itextpdf.text.Document ddoPdf = PdfHelper.createDocumentPDF(vehicleJourney.getTrainNumber(), vehicleJourney.getOperatingDay());
         final PdfPTable table = new PdfPTable(11);
@@ -40,7 +41,7 @@ public class DigitalDrivingOrderService {
 
         //TODO parseStrecke(table, strecke, journeyPlanner);
         for (DigitalDrivingOrderEntry entry : buildDigitalDrivingOrder(radnDaten, vehicleJourney)) {
-            addTableRow(table, entry, vehicleJourney);
+            addTableRow(table, entry);
         }
 
         ddoPdf.add(table);
@@ -54,8 +55,8 @@ public class DigitalDrivingOrderService {
     }
 
     /**
-     * Im RADN sind alle möglichen Zug-/Bremsreihen drin. Mit welcher Zug-/Bremsreihe die Fahrt vorgesehen ist (=Regelreihe) ist in NeTS respektive RCS definiert. Du kannst die Regelreihe für eine
-     * spezifische Fahrt mit LEA Print nachschauen: https://leaprint.sbb.ch/ Die vorausgewählte Zug-/Bremsreihe ist die Regelreihe.
+     * Im RADN sind alle möglichen Zug-/Bremsreihen drin. Mit welcher Zug-/Bremsreihe die Fahrt vorgesehen ist (=Regelreihe) ist in NeTS respektive RCS definiert.
+     * @see <a href="https://leaprint.sbb.ch/">Regelreihe für eine spezifische Fahrt: Die vorausgewählte Zug-/Bremsreihe ist die Regelreihe.</a>
      */
     private void overlayRadn(List<DigitalDrivingOrderEntry> digitalDrivingOrderEntries, RadnDaten radnDaten) {
         // TODO hardcoded: bezeichnung="Genève-La-Praille - / Genève-Aéroport - Lausanne" bezeichnungKurz="GEPR - / GEAP - LS"
@@ -126,18 +127,16 @@ public class DigitalDrivingOrderService {
                     final TsBpvElemente elemente = teilstreckenBpVerbindung.getTsBpvElemente();
                     if (elemente != null) {
                         for (Knoten knoten : elemente.getBlocksignalOrSchutzstreckeOrZugsicherungsgeraet()) {
-                            if (knoten instanceof Blocksignal) {
-                                // TODO "blocco <bezeichnung> (<km>
-                                log.info("Blocksignal {} {}", ((Blocksignal) knoten).getBezeichnung(), knoten.getKm());
-                                entry.setShortName(entry.getShortName() + " Block " + ((Blocksignal) knoten).getBezeichnung() + "@" + knoten.getKm());
-                            } else if (knoten instanceof Kurve) {
-                                // TODO "Curva uscita <kmBis>"
-                                log.info("Kurve {} {}", ((Kurve) knoten).getStandardText(), knoten.getKm());
-                                entry.setShortName(entry.getShortName() + " Kurve " + ((Kurve) knoten).getStandardText() + "@" + knoten.getKm());
-                            } else if (knoten instanceof Schutzstrecke) {
-                                log.info("Schutzstrecke {}, km={}", ((Schutzstrecke) knoten).getStandardText(), knoten.getKm());
-                            } else {
-                                log.warn("unknown Knoten: {}", knoten);
+                            switch (knoten) {
+                                case Blocksignal blocksignal -> {
+                                    // TODO ::text like "Frontier" ?
+                                    entry.getBlocks().add("Block " + blocksignal.getBezeichnung() + "@" + knoten.getKm());
+                                }
+                                case Kurve kurve -> {
+                                    entry.getCurves().add("Kurve " + kurve.getStandardText() + "@" + knoten.getKm());
+                                }
+                                case Schutzstrecke schutzstrecke -> log.info("Schutzstrecke {}, km={}", schutzstrecke.getStandardText(), knoten.getKm());
+                                case null, default -> log.warn("untreated Knoten: {}", knoten);
                             }
                         }
                     }
@@ -166,7 +165,7 @@ public class DigitalDrivingOrderService {
             .toList();
     }
 
-    private void addTableRow(PdfPTable table, DigitalDrivingOrderEntry entry, VehicleJourney vehicleJourney) {
+    private void addTableRow(PdfPTable table, DigitalDrivingOrderEntry entry) {
         table.addCell(entry.getFussnote());
         table.addCell(entry.getKm() == null ? "" : entry.getKm().toString());
         table.addCell(entry.getGefaelle() == null ? "" : "" + entry.getGefaelle());
@@ -180,24 +179,31 @@ public class DigitalDrivingOrderService {
         table.addCell(entry.getAb());
     }
 
-    private String toPlaceName(DigitalDrivingOrderEntry place) {
+    /**
+     * @return formatted Betriebspunkt (Bp)
+     */
+    private String toPlaceName(DigitalDrivingOrderEntry entry) {
         String text = "";
-        if (place.isAusgeblendet()) {
+        if (entry.isAusgeblendet()) {
             text += "H";
         }
-        if (place.isKlammer()) {
+        if (entry.isKlammer()) {
             text += "K";
         }
-        if (!"".equals(text)) {
+        if (!text.isEmpty()) {
             text = "<" + text + ">";
         }
-        text += place.getShortName();
-        if (!"".equals(place.getName())) {
-            text += "(" + place.getName() + ")";
+        text += entry.getName() == null ? entry.getShortName() : entry.getName();
+
+        if (entry.getBahnhofR150() != null) {
+            text += " - " + entry.getBahnhofR150();
         }
 
-        if (place.getBahnhofR150() != null) {
-            text += " - " + place.getBahnhofR150();
+        for (String block : entry.getBlocks()) {
+            text += " " + block;
+        }
+        for (String curve : entry.getCurves()) {
+            text += " " + curve;
         }
         return text;
     }

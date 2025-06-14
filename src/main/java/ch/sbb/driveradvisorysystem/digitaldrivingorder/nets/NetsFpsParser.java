@@ -50,7 +50,7 @@ public class NetsFpsParser {
         for (int i = 6; i < lastLineIndex; i++) {
             final String line = extractLine(journeyPlanner, i);
             final String stopPlaceNameShort = extractStopPlaceShortName(line);
-            if (!"".equals(stopPlaceNameShort)) {
+            if (!stopPlaceNameShort.isEmpty()) {
                 // might parse 1 or 2 lines
                 stopPoints.add(mapToScheduledStopPoint(journeyPlanner, i, lastLineIndex, stopPlaceNameShort, extractValue(line)));
             }

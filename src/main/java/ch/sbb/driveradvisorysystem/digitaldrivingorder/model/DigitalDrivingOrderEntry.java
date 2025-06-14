@@ -1,5 +1,7 @@
-package ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn;
+package ch.sbb.driveradvisorysystem.digitaldrivingorder.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 
 @Data
@@ -21,6 +23,8 @@ public class DigitalDrivingOrderEntry {
     String name;
     String streckenR150;
     String bahnhofR150;
+    List<String> blocks = new ArrayList<>();
+    List<String> curves = new ArrayList<>();
 
     // PDF relevant fahrplan
     String an;

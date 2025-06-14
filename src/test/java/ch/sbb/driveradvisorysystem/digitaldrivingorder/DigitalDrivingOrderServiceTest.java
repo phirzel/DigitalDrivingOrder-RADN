@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ch.sbb.bahninfrastruktur.eradn.RadnDaten;
 import ch.sbb.bahninfrastruktur.eradn.Strecke;
-import ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn.DigitalDrivingOrderEntry;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn.RadnParser;
+import ch.sbb.driveradvisorysystem.digitaldrivingorder.model.DigitalDrivingOrderEntry;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.NetsFpsParser;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.model.VehicleJourney;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ class DigitalDrivingOrderServiceTest {
         //TODO move to RadnParserTest
         assertThat(radnDaten).isNotNull();
         assertThat(radnDaten.getStrecken().getStrecke()).hasSize(229);
-        final Strecke strecke101 = radnDaten.getStrecken().getStrecke().get(0);
+        final Strecke strecke101 = radnDaten.getStrecken().getStrecke().getFirst();
         assertThat(strecke101.getStreckenId()).isEqualTo("101");
         assertThat(strecke101.getTeilstrecken().getTeilstrecke()).hasSize(3);
 
