@@ -296,18 +296,10 @@ public class DigitalDrivingOrderService {
                     if (elemente != null) {
                         for (Knoten knoten : elemente.getBlocksignalOrSchutzstreckeOrZugsicherungsgeraet()) {
                             switch (knoten) {
-                                case Blocksignal blocksignal -> {
-                                    entry.getBlocks().add(blocksignal);
-                                }
-                                case Kurve kurve -> {
-                                    entry.getCurves().add(kurve);
-                                }
-                                case Schutzstrecke schutzstrecke -> {
-                                    entry.getSchutzstrecken().add(schutzstrecke);
-                                }
-                                case null, default -> {
-                                    log.warn("untreated Knoten: {}", knoten);
-                                }
+                                case Blocksignal blocksignal -> entry.getBlocks().add(blocksignal);
+                                case Kurve kurve -> entry.getCurves().add(kurve);
+                                case Schutzstrecke schutzstrecke -> entry.getSchutzstrecken().add(schutzstrecke);
+                                case null, default -> log.warn("untreated Knoten: {}", knoten);
                             }
                         }
                     }

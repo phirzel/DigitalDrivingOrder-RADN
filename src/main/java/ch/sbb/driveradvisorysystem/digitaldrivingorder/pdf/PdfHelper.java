@@ -42,7 +42,7 @@ public class PdfHelper {
     }
 
     public static void addTableHeader(PdfPTable table, List<String> columnTitles) {
-        columnTitles.stream().forEach(columnTitle -> {
+        columnTitles.forEach(columnTitle -> {
             final PdfPCell cell = new PdfPCell();
             cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
             cell.setBorderWidth(2);
