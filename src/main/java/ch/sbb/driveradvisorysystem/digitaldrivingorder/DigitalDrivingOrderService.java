@@ -19,30 +19,41 @@ import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.model.VehicleJourney
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.pdf.PdfHelper;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 
 @Slf4j
 //@Service
 public class DigitalDrivingOrderService {
 
-    private static final String TODO = "<TODO>";
     //TODO make re-entrant
     private int fussnotenIndex = -1;
 
     //TODO detach data building from visualisation
     public void generatePDF(RadnDaten radnDaten, VehicleJourney vehicleJourney) throws DocumentException, FileNotFoundException {
         final com.itextpdf.text.Document ddoPdf = PdfHelper.createDocumentPDF(vehicleJourney.getTrainNumber(), vehicleJourney.getOperatingDay());
-        final PdfPTable table = new PdfPTable(11);
-        PdfHelper.addTableHeader(table);
-        Chunk chunk = new Chunk(TODO /*strecke.getIsb()*/ + "     " +
-            "Zug " + vehicleJourney.getTrainNumber() + "     " + vehicleJourney.getOperatingDay());
+
+        Chunk chunk = new Chunk("<strecke::ISB>     " +
+            "Zug " + vehicleJourney.getTrainNumber() + "     " + vehicleJourney.getOperatingDay(), PdfHelper.TITLE);
         ddoPdf.add(chunk);
         ddoPdf.add(new Paragraph(" "));
+
+        final PdfPTable table = new PdfPTable(11);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(0f);
+        table.setSpacingAfter(0f);
+        table.setTotalWidth(new float[]{10, 10, 10, 10, 30, 20, 20, 100, 20, 15, 15});
+        //table.setLockedWidth(true);
+        PdfHelper.addTableHeader(table, List.of("" /*de:fussnote Ref*/, "km", "-" /*de:Gefälle*/, "+" /*de:Steigung*/, "Funkkanal", "AE" /*de:Abfahrt-Erlaubnis*/, "ETCS", "", "R150", "An", "Ab"));
 
         //TODO parseStrecke(table, strecke, journeyPlanner);
         final List<String> footnoteTexts = new ArrayList<>();
@@ -53,12 +64,94 @@ public class DigitalDrivingOrderService {
 
         for (String footnoteText : footnoteTexts) {
             // TODO add after each page instead of once at the end
-            chunk = new Chunk(footnoteText);
-            ddoPdf.add(chunk);
-            ddoPdf.add(new Paragraph(" "));
+            ddoPdf.add(new Paragraph(footnoteText, PdfHelper.FOOTNOTE));
         }
 
         ddoPdf.close();
+    }
+
+    private List<String> addTableRow(PdfPTable table, DigitalDrivingOrderEntry entry) throws DocumentException {
+        String footnoteRef = "";
+        final List<String> footnoteTexts = new ArrayList<>();
+        for (Footnote footnote : entry.getFootnotes()) {
+            final String index = footnote.getIndex() + ")";
+            footnoteRef += index;
+            footnoteTexts.add(index + " " + footnote.getText());
+        }
+        addCell(table, footnoteRef);
+
+        addCell(table, entry.getKm() == null ? "" : entry.getKm().toString());
+        addCell(table, entry.getGefaelle() == null ? "" : "" + entry.getGefaelle());
+        addCell(table, entry.getSteigung() == null ? "" : "" + entry.getSteigung());
+        addCell(table, entry.getFunkkanal());
+        addCell(table, entry.getAbfahrtsErlaubnis());
+        addCell(table, entry.getEtcs());
+        table.addCell(toPlaceData(entry));
+        addCell(table, entry.getStreckenR150());
+        addCell(table, entry.getAn());
+        addCell(table, entry.getAb());
+
+        return footnoteTexts;
+    }
+
+    private void addCell(PdfPTable table, String cellValue) {
+        final PdfPCell cell = new PdfPCell(new Phrase(cellValue, PdfHelper.CELL_VALUE));
+        //cell.setBorder(Rectangle.BOX);
+        cell.setBorderWidth(1);
+        cell.setRowspan(1);
+        table.addCell(cell);
+    }
+
+    /**
+     * @return formatted Betriebspunkt (Bp) with additional infos
+     */
+    private PdfPTable toPlaceData(DigitalDrivingOrderEntry entry) throws DocumentException {
+        final PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(0f);
+        table.setSpacingAfter(0f);
+        table.setTotalWidth(new float[]{60, 40});
+
+        addInCell(table, entry.getName() == null ? entry.getShortName() : entry.getName() + " (" + entry.getShortName() + ")", entry.getBahnhofR150() == null ? "" : entry.getBahnhofR150(),
+            (!entry.getAb().isEmpty() | (entry.getAn() != null && !entry.getAn().contains("(")) ? PdfHelper.TITLE : PdfHelper.CELL_VALUE));
+
+        // TODO check format with Biz
+        String text = "";
+        if (entry.isAusgeblendet()) {
+            text += "H";
+        }
+        if (entry.isKlammer()) {
+            text += "K";
+        }
+        if (!text.isEmpty()) {
+            addInCell(table, "<" + text + ">", "", PdfHelper.CELL_VALUE_SMALL);
+        }
+
+        // Knoten
+        for (Blocksignal block : entry.getBlocks()) {
+            addInCell(table, "Block: " + block.getBezeichnung() + (block.getText() == null ? "" : " (" + block.getText() + ")"), "" + block.getKm(), PdfHelper.CELL_VALUE_PINK);
+        }
+        for (Kurve curve : entry.getCurves()) {
+            addInCell(table, "Kurve: " + curve.getStandardText(), "" + curve.getKm(), PdfHelper.CELL_VALUE_BLUE);
+        }
+        for (Schutzstrecke schutzstrecke : entry.getSchutzstrecken()) {
+            addInCell(table, "Schutztstrecke: " + schutzstrecke.getStandardText(), "" + schutzstrecke.getKm(), PdfHelper.CELL_VALUE);
+        }
+        return table;
+    }
+
+    private void addInCell(PdfPTable table, String column0Text, String column1Text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(column0Text, font));
+        cell.setBorder(Rectangle.TOP);
+        //cell.setBorderWidth(1);
+        cell.setRowspan(1);
+        table.addCell(cell);
+
+        cell = new PdfPCell(new Phrase(column1Text, font));
+        cell.setBorder(Rectangle.TOP);
+        //cell.setBorderWidth(1);
+        cell.setRowspan(1);
+        table.addCell(cell);
     }
 
     List<DigitalDrivingOrderEntry> buildDigitalDrivingOrder(RadnDaten eRADN, VehicleJourney vehicleJourney) {
@@ -69,11 +162,12 @@ public class DigitalDrivingOrderService {
 
     /**
      * Im RADN sind alle möglichen Zug-/Bremsreihen drin. Mit welcher Zug-/Bremsreihe die Fahrt vorgesehen ist (=Regelreihe) ist in NeTS respektive RCS definiert.
+     *
      * @see <a href="https://leaprint.sbb.ch/">Regelreihe für eine spezifische Fahrt: Die vorausgewählte Zug-/Bremsreihe ist die Regelreihe.</a>
      */
     private void overlayRadn(List<DigitalDrivingOrderEntry> digitalDrivingOrderEntries, RadnDaten radnDaten) {
         // TODO hardcoded: bezeichnung="Genève-La-Praille - / Genève-Aéroport - Lausanne" bezeichnungKurz="GEPR - / GEAP - LS"
-        final Strecke strecke = RadnParser.findStrecke(radnDaten, "111");
+        Strecke strecke = RadnParser.findStrecke(radnDaten, "111");
         final List<Fussnote> fussnoten = strecke.getFussnoten().getFussnote();
 
         int entryIndex = 0;
@@ -83,6 +177,49 @@ public class DigitalDrivingOrderService {
         // NY -> LS, skip NY because last in previous Teilstrecke
         entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 4), true, fussnoten);
         //TODO Strecke LS->SG
+
+        // Lausanne - Fribourg/Freiburg - / Laupen - Bern
+        strecke = RadnParser.findStrecke(radnDaten, "121");
+        // LS -> FRI
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 1), true, fussnoten);
+        // FRI -> THOD
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 2), true, fussnoten);
+        // LP -> BN (skip some at beginning until THOD)
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 3), true, fussnoten);
+
+        // Bern - / Solothurn - NBS - Olten
+        strecke = RadnParser.findStrecke(radnDaten, "142");
+        // BN -> WANZ
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 1), true, fussnoten);
+        // SO -> OLTEN (skip some at beginning)
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 2 /*TODO or 3?*/), true, fussnoten);
+
+        // Olten - Lenzburg - RBL / - Brugg
+        strecke = RadnParser.findStrecke(radnDaten, "151");
+        // OL -> WOES
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 1 /*TODO or 5?*/), true, fussnoten);
+        //
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 2 /*TODO or 6?*/), true, fussnoten);
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 6), true, fussnoten);
+        // -> ZH
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 11), true, fussnoten);
+
+        // Zürich Altstetten - / Zürich HB - Zürich Oerlikon
+        strecke = RadnParser.findStrecke(radnDaten, "701");
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 4), true, fussnoten);
+
+        // Zürich Oerlikon - Winterthur
+        strecke = RadnParser.findStrecke(radnDaten, "702");
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 1), true, fussnoten);
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 3), true, fussnoten);
+
+        // Winterthur - St. Gallen St. Fiden
+        strecke = RadnParser.findStrecke(radnDaten, "711");
+        entryIndex = merge(digitalDrivingOrderEntries, entryIndex, RadnParser.findTeilstrecke(strecke, 1), true, fussnoten);
+
+        if (entryIndex != -1) {
+            throw new NotImplementedException("journey not fully treated");
+        }
     }
 
     /**
@@ -95,12 +232,17 @@ public class DigitalDrivingOrderService {
     private int merge(List<DigitalDrivingOrderEntry> digitalDrivingOrderEntries, int index, Teilstrecke teilstrecke, boolean skipOrigin, List<Fussnote> fussnoten) {
         int count = index;
         int i = skipOrigin ? 1 : 0;
+        int usedBps = 0;
         for (; i < teilstrecke.getTeilstreckenBPe().getTeilstreckenBp().size(); i++) {
+            if (count >= digitalDrivingOrderEntries.size()) {
+                log.info("end of journey reached, skip farther Bp's in Teilstrecke");
+                return -1;
+            }
             final DigitalDrivingOrderEntry entry = digitalDrivingOrderEntries.get(count);
 
             final TeilstreckenBp teilstreckenBp = teilstrecke.getTeilstreckenBPe().getTeilstreckenBp().get(i);
             if (!entry.getShortName().equals(teilstreckenBp.getBpAbkuerzung())) {
-                //TODO RADN Teilstrecke 4::teilstreckenBp[26]="LS", ::teilstreckenBp[27]="LSPA"; NeTS "LS", "PUN" -> mismatch PUN<>LSPA
+                //TODO for e.g. RADN Teilstrecke 4::teilstreckenBp[26]="LS", ::teilstreckenBp[27]="LSPA"; NeTS "LS", "PUN" -> mismatch PUN<>LSPA
                 log.warn("no match for Teilstrecke={}, teilstreckeBp[{}], DigitalDrivingOrderEntry[{}]", teilstrecke.getTeilstreckenNr(), i, count);
                 continue;
             }
@@ -124,7 +266,12 @@ public class DigitalDrivingOrderService {
                     .build());
             }
 
+            usedBps++;
             count++;
+        }
+
+        if (usedBps == 0) {
+            throw new NotImplementedException("Developer fault: no Bp used out of Teilstrecke");
         }
 
         mergeTeilstreckenBpVerbindungen(digitalDrivingOrderEntries, index, count - 1, teilstrecke.getTeilstreckenBpVerbindungen());
@@ -150,14 +297,13 @@ public class DigitalDrivingOrderService {
                         for (Knoten knoten : elemente.getBlocksignalOrSchutzstreckeOrZugsicherungsgeraet()) {
                             switch (knoten) {
                                 case Blocksignal blocksignal -> {
-                                    // TODO ::text like "Frontier" ?
-                                    entry.getBlocks().add("Block " + blocksignal.getBezeichnung() + "@" + knoten.getKm());
+                                    entry.getBlocks().add(blocksignal);
                                 }
                                 case Kurve kurve -> {
-                                    entry.getCurves().add("Kurve " + kurve.getStandardText() + "@" + knoten.getKm());
+                                    entry.getCurves().add(kurve);
                                 }
                                 case Schutzstrecke schutzstrecke -> {
-                                    entry.getSchutzstrecken().add("Schutzstrecke " + schutzstrecke.getStandardText() + "@" + schutzstrecke.getKm());
+                                    entry.getSchutzstrecken().add(schutzstrecke);
                                 }
                                 case null, default -> {
                                     log.warn("untreated Knoten: {}", knoten);
@@ -188,61 +334,5 @@ public class DigitalDrivingOrderService {
                 return entry;
             })
             .toList();
-    }
-
-    private List<String> addTableRow(PdfPTable table, DigitalDrivingOrderEntry entry) {
-        String footnoteRef = "";
-        final List<String> footnoteTexts = new ArrayList<>();
-        for (Footnote footnote : entry.getFootnotes()) {
-            final String index = footnote.getIndex() + ")";
-            footnoteRef += index;
-            footnoteTexts.add(index + " " + footnote.getText());
-        }
-        table.addCell(footnoteRef);
-
-        table.addCell(entry.getKm() == null ? "" : entry.getKm().toString());
-        table.addCell(entry.getGefaelle() == null ? "" : "" + entry.getGefaelle());
-        table.addCell(entry.getSteigung() == null ? "" : "" + entry.getSteigung());
-        table.addCell(entry.getFunkkanal());
-        table.addCell(entry.getAbfahrtsErlaubnis());
-        table.addCell(entry.getEtcs());
-        table.addCell(toPlaceName(entry));
-        table.addCell(entry.getStreckenR150());
-        table.addCell(entry.getAn());
-        table.addCell(entry.getAb());
-
-        return footnoteTexts;
-    }
-
-    /**
-     * @return formatted Betriebspunkt (Bp)
-     */
-    private String toPlaceName(DigitalDrivingOrderEntry entry) {
-        String text = "";
-        if (entry.isAusgeblendet()) {
-            text += "H";
-        }
-        if (entry.isKlammer()) {
-            text += "K";
-        }
-        if (!text.isEmpty()) {
-            text = "<" + text + ">";
-        }
-        text += entry.getName() == null ? entry.getShortName() : entry.getName();
-
-        if (entry.getBahnhofR150() != null) {
-            text += " - " + entry.getBahnhofR150();
-        }
-
-        for (String block : entry.getBlocks()) {
-            text += " " + block;
-        }
-        for (String curve : entry.getCurves()) {
-            text += " " + curve;
-        }
-        for (String schutzstrecke : entry.getSchutzstrecken()) {
-            text += " " + schutzstrecke;
-        }
-        return text;
     }
 }

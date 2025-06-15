@@ -1,5 +1,8 @@
 package ch.sbb.driveradvisorysystem.digitaldrivingorder.model;
 
+import ch.sbb.bahninfrastruktur.eradn.Blocksignal;
+import ch.sbb.bahninfrastruktur.eradn.Kurve;
+import ch.sbb.bahninfrastruktur.eradn.Schutzstrecke;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -22,9 +25,9 @@ public class DigitalDrivingOrderEntry {
     String name;
     String streckenR150;
     String bahnhofR150;
-    List<String> blocks = new ArrayList<>();
-    List<String> curves = new ArrayList<>();
-    List<String> schutzstrecken = new ArrayList<>();
+    List<Blocksignal> blocks = new ArrayList<>();
+    List<Kurve> curves = new ArrayList<>();
+    List<Schutzstrecke> schutzstrecken = new ArrayList<>();
     List<Footnote> footnotes = new ArrayList<>();
 
     // PDF relevant fahrplan

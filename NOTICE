@@ -1,0 +1,8 @@
+This product includes software developed at:
+* The Apache Software Foundation (http://www.apache.org/, https://opensource.org/license/apache-2-0/)
+* Spring https://github.com/spring-projects/
+* Jackson https://github.com/FasterXML
+* Lombok https://github.com/projectlombok/lombok/blob/master/LICENSE
+* SLF4J https://www.slf4j.org/
+* iText AGPLv3.0 https://itextpdf.com/products/itext-core
+* ...
