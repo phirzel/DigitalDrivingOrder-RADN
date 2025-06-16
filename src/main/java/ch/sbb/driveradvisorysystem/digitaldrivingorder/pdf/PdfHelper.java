@@ -53,13 +53,13 @@ public class PdfHelper {
     }
 
     public static void addTableHeader(PdfPTable table, List<String> columnTitles) {
-        columnTitles.forEach(columnTitle -> {
+        for (String columnTitle : columnTitles) {
             final PdfPCell cell = new PdfPCell();
             cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
             cell.setBorderWidth(2);
             cell.setPhrase(new Phrase(columnTitle, CELL_HEADER));
             table.addCell(cell);
-            });
+        }
     }
 
     private PdfHelper(DigitalDrivingOrder digitalDrivingOrder) throws DocumentException, FileNotFoundException {
