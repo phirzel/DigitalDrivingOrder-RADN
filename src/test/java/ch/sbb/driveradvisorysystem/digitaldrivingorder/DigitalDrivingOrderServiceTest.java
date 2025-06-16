@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ch.sbb.bahninfrastruktur.eradn.RadnDaten;
 import ch.sbb.bahninfrastruktur.eradn.Strecke;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.eradn.RadnParser;
-import ch.sbb.driveradvisorysystem.digitaldrivingorder.model.DigitalDrivingOrderEntry;
+import ch.sbb.driveradvisorysystem.digitaldrivingorder.model.DigitalDrivingOrder;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.NetsFpsParser;
 import ch.sbb.driveradvisorysystem.digitaldrivingorder.nets.model.VehicleJourney;
+import ch.sbb.driveradvisorysystem.digitaldrivingorder.pdf.PdfHelper;
 import java.time.LocalDate;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DigitalDrivingOrderServiceTest {
@@ -18,7 +18,7 @@ class DigitalDrivingOrderServiceTest {
     private final DigitalDrivingOrderService digitalDrivingOrderService = new DigitalDrivingOrderService();
 
     @Test
-    void generatePDF() throws Exception {
+    void buildDigitalDrivingOrderAndGeneratePDF() throws Exception {
         // contains all de:Strecken TODO get newest from eRADN file
         final RadnDaten radnDaten = RadnParser.unmarshal("src/main/resources/eRADN_280_20250121_083123_000.xml");
         //TODO move to RadnParserTest
@@ -41,10 +41,14 @@ class DigitalDrivingOrderServiceTest {
         assertThat(vehicleJourney.getStopPoints().get(166).getPlaceShortName()).isEqualTo("SG");
         assertThat(vehicleJourney.getStopPoints().get(166).getTimeAimedArrival()).as("last stop formatted as departure but is arrival").isEqualTo("11.52");
 
-        final List<DigitalDrivingOrderEntry> digitalDrivingOrderEntries = digitalDrivingOrderService.buildDigitalDrivingOrder(radnDaten, vehicleJourney);
-        assertThat(digitalDrivingOrderEntries).hasSizeGreaterThanOrEqualTo(vehicleJourney.getStopPoints().size());
+        final DigitalDrivingOrder digitalDrivingOrder = digitalDrivingOrderService.buildDigitalDrivingOrder(radnDaten, vehicleJourney);
+        assertThat(digitalDrivingOrder).isNotNull();
+        assertThat(digitalDrivingOrder.getIsbs()).hasSizeGreaterThanOrEqualTo(1);
+        assertThat(digitalDrivingOrder.getTrainNumber()).isNotBlank();
+        assertThat(digitalDrivingOrder.getOperatingDay()).isNotNull();
+        assertThat(digitalDrivingOrder.getEntries()).hasSizeGreaterThanOrEqualTo(vehicleJourney.getStopPoints().size());
 
-        digitalDrivingOrderService.generatePDF(radnDaten, vehicleJourney);
+        PdfHelper.generatePDF(digitalDrivingOrder);
         //TODO assert PDF created
     }
 }
