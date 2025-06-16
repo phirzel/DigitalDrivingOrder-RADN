@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 //@Service
@@ -151,8 +152,8 @@ public class DigitalDrivingOrderService {
             entry.setFunkkanal(teilstreckenBp.getFunkkanal());
             entry.setAbfahrtsErlaubnis(teilstreckenBp.getAbfahrerlaubnisText());
 
-            entry.setStreckenR150(teilstreckenBp.getStreckenGeschwindigkeit() == null ? "" : RadnParser.getR150(teilstreckenBp.getStreckenGeschwindigkeit().getV()));
-            entry.setBahnhofR150(teilstreckenBp.getBahnhofsGeschwindigkeit() == null ? "" : RadnParser.getR150(teilstreckenBp.getBahnhofsGeschwindigkeit().getV()));
+            entry.setStreckenR150(teilstreckenBp.getStreckenGeschwindigkeit() == null ? StringUtils.EMPTY : RadnParser.getR150(teilstreckenBp.getStreckenGeschwindigkeit().getV()));
+            entry.setBahnhofR150(teilstreckenBp.getBahnhofsGeschwindigkeit() == null ? StringUtils.EMPTY : RadnParser.getR150(teilstreckenBp.getBahnhofsGeschwindigkeit().getV()));
 
             for (Fussnote fussnoteForBp : RadnParser.findFussnoten(teilstrecke.getId(), entry.getTeilstreckenBpId(), fussnoten)) {
                 entry.getFootnotes().add(Footnote.builder()

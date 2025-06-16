@@ -21,8 +21,11 @@ import com.itextpdf.text.pdf.PdfWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Pretty print {@link DigitalDrivingOrder} to PDF.
@@ -36,6 +39,8 @@ public class PdfHelper {
     private static final Font CELL_VALUE_PINK = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.PINK);
     private static final Font CELL_VALUE_BLUE = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.BLUE);
     private static final Font CELL_VALUE_SMALL = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy hh::mm:ss");
 
     public static com.itextpdf.text.Document createDocumentPDF(String trainNumber, LocalDate date) throws FileNotFoundException, DocumentException {
         final com.itextpdf.text.Document document = new com.itextpdf.text.Document();
@@ -76,9 +81,9 @@ public class PdfHelper {
         table.setSpacingAfter(0f);
         table.setTotalWidth(new float[]{10, 10, 10, 10, 30, 20, 20, 100, 20, 15, 15});
         //table.setLockedWidth(true);
-        PdfHelper.addTableHeader(table, List.of("" /*de:fussnote Ref*/, "km", "-" /*de:Gefälle*/, "+" /*de:Steigung*/, "Funkkanal", "AE" /*de:Abfahrt-Erlaubnis*/, "ETCS", "", "R150", "An", "Ab"));
+        PdfHelper.addTableHeader(table,
+            List.of(StringUtils.EMPTY /*de:fussnote Ref*/, "km", "-" /*de:Gefälle*/, "+" /*de:Steigung*/, "Funkkanal", "AE" /*de:Abfahrt-Erlaubnis*/, "ETCS", StringUtils.EMPTY, "R150", "An", "Ab"));
 
-        //TODO parseStrecke(table, strecke, journeyPlanner);
         final List<String> footnoteTexts = new ArrayList<>();
         for (DigitalDrivingOrderEntry entry : digitalDrivingOrder.getEntries()) {
             footnoteTexts.addAll(addTableRow(table, entry));
@@ -89,6 +94,8 @@ public class PdfHelper {
             // TODO add after each page instead of once at the end
             ddoPdf.add(new Paragraph(footnoteText, PdfHelper.FOOTNOTE));
         }
+        ddoPdf.add(Chunk.NEWLINE);
+        ddoPdf.add(new Paragraph("Erstellt am: " + LocalDateTime.now().format(DATE_TIME_FORMATTER), PdfHelper.FOOTNOTE));
 
         ddoPdf.close();
     }
@@ -98,7 +105,7 @@ public class PdfHelper {
     }
 
     private List<String> addTableRow(PdfPTable table, DigitalDrivingOrderEntry entry) throws DocumentException {
-        String footnoteRef = "";
+        String footnoteRef = StringUtils.EMPTY;
         final List<String> footnoteTexts = new ArrayList<>();
         for (Footnote footnote : entry.getFootnotes()) {
             final String index = footnote.getIndex() + ")";
@@ -107,9 +114,9 @@ public class PdfHelper {
         }
         addCell(table, footnoteRef);
 
-        addCell(table, entry.getKm() == null ? "" : entry.getKm().toString());
-        addCell(table, entry.getGefaelle() == null ? "" : "" + entry.getGefaelle());
-        addCell(table, entry.getSteigung() == null ? "" : "" + entry.getSteigung());
+        addCell(table, entry.getKm() == null ? StringUtils.EMPTY : entry.getKm().toString());
+        addCell(table, entry.getGefaelle() == null ? StringUtils.EMPTY : entry.getGefaelle().toString());
+        addCell(table, entry.getSteigung() == null ? StringUtils.EMPTY : entry.getSteigung().toString());
         addCell(table, entry.getFunkkanal());
         addCell(table, entry.getAbfahrtsErlaubnis());
         addCell(table, entry.getEtcs());
@@ -139,11 +146,13 @@ public class PdfHelper {
         table.setSpacingAfter(0f);
         table.setTotalWidth(new float[]{60, 40});
 
-        addInCell(table, entry.getName() == null ? entry.getShortName() : entry.getName() + " (" + entry.getShortName() + ")", entry.getBahnhofR150() == null ? "" : entry.getBahnhofR150(),
-            (!entry.getAb().isEmpty() | (entry.getAn() != null && !entry.getAn().contains("(")) ? PdfHelper.TITLE : PdfHelper.CELL_VALUE));
+        addInCell(table,
+            StringUtils.isBlank(entry.getName()) ? entry.getShortName() : entry.getName() + " (" + entry.getShortName() + ")",
+            StringUtils.isBlank(entry.getBahnhofR150()) ? StringUtils.EMPTY : entry.getBahnhofR150(),
+            (StringUtils.isNotBlank(entry.getAb()) | (!StringUtils.contains(entry.getAn(), "(")) ? PdfHelper.TITLE : PdfHelper.CELL_VALUE));
 
         // TODO check format with Biz
-        String text = "";
+        String text = StringUtils.EMPTY;
         if (entry.isAusgeblendet()) {
             text += "H";
         }
@@ -151,18 +160,19 @@ public class PdfHelper {
             text += "K";
         }
         if (!text.isEmpty()) {
-            addInCell(table, "<" + text + ">", "", PdfHelper.CELL_VALUE_SMALL);
+            addInCell(table, "<" + text + ">", StringUtils.EMPTY, PdfHelper.CELL_VALUE_SMALL);
         }
 
         // Knoten
         for (Blocksignal block : entry.getBlocks()) {
-            addInCell(table, "Block: " + block.getBezeichnung() + (block.getText() == null ? "" : " (" + block.getText() + ")"), "" + block.getKm(), PdfHelper.CELL_VALUE_PINK);
+            addInCell(table, "Block: " + block.getBezeichnung() + (StringUtils.isBlank(block.getText()) ? StringUtils.EMPTY : " (" + block.getText() + ")"), StringUtils.EMPTY + block.getKm(),
+                PdfHelper.CELL_VALUE_PINK);
         }
         for (Kurve curve : entry.getCurves()) {
-            addInCell(table, "Kurve: " + curve.getStandardText(), "" + curve.getKm(), PdfHelper.CELL_VALUE_BLUE);
+            addInCell(table, "Kurve: " + curve.getStandardText(), StringUtils.EMPTY + curve.getKm(), PdfHelper.CELL_VALUE_BLUE);
         }
         for (Schutzstrecke schutzstrecke : entry.getSchutzstrecken()) {
-            addInCell(table, "Schutztstrecke: " + schutzstrecke.getStandardText(), "" + schutzstrecke.getKm(), PdfHelper.CELL_VALUE);
+            addInCell(table, "Schutztstrecke: " + schutzstrecke.getStandardText(), StringUtils.EMPTY + schutzstrecke.getKm(), PdfHelper.CELL_VALUE);
         }
         return table;
     }

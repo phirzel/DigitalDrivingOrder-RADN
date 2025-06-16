@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 @UtilityClass
 public class NetsFpsParser {
@@ -67,16 +68,16 @@ public class NetsFpsParser {
      * arrival: format like "=T(""08(00)"")" or "=T(""(37)"")"
      */
     private ScheduledStopPoint mapToScheduledStopPoint(List<String[]> journeyPlanner, int lineIndex, int lastLineIndex, String stopPlaceNameShort, String timeAimed) {
-        String arrival = "";
-        String departure = "";
+        String arrival = StringUtils.EMPTY;
+        String departure = StringUtils.EMPTY;
 
         if (timeAimed.contains("(" /*passthrough*/)) {
             arrival = timeAimed;
         } else {
             if (timeAimed.contains("style")) {
                 // real arrival timeAimed
-                arrival = timeAimed.replace("<style isUnderline=\"true\">", "");
-                arrival = arrival.replace("</style>", "");
+                arrival = timeAimed.replace("<style isUnderline=\"true\">", StringUtils.EMPTY);
+                arrival = arrival.replace("</style>", StringUtils.EMPTY);
 
                 if (journeyPlanner.size() > lineIndex + 1) {
                     // next line contains departure for same stop-place

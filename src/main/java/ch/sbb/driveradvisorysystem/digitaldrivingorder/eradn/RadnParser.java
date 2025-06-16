@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 @UtilityClass
 public class RadnParser {
@@ -62,6 +63,6 @@ public class RadnParser {
             .filter(v -> "R".equals(v.getZugreihe()) && 150 == v.getBremsverhaeltnis())
             .map(V::getGeschwindigkeit)
             .findFirst()
-            .orElse("");
+            .orElse(StringUtils.EMPTY);
     }
 }
