@@ -32,6 +32,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class PdfHelper {
 
+    private static final float[] COLUMN_WIDTH = {10, 15, 10, 10, 15, 15, 30, 20, 15, 100, 20};
+
     private static final Font TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.BLACK);
     private static final Font FOOTNOTE = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
     private static final Font CELL_HEADER = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
@@ -79,10 +81,10 @@ public class PdfHelper {
         table.setWidthPercentage(100);
         table.setSpacingBefore(0f);
         table.setSpacingAfter(0f);
-        table.setTotalWidth(new float[]{10, 10, 10, 10, 30, 20, 20, 100, 20, 15, 15});
+        table.setTotalWidth(COLUMN_WIDTH);
         //table.setLockedWidth(true);
         PdfHelper.addTableHeader(table,
-            List.of(StringUtils.EMPTY /*de:fussnote Ref*/, "km", "-" /*de:Gefälle*/, "+" /*de:Steigung*/, "Funkkanal", "AE" /*de:Abfahrt-Erlaubnis*/, "ETCS", StringUtils.EMPTY, "R150", "An", "Ab"));
+            List.of("(i)" /*de:fussnote Ref*/, "km", "-" /*de:Gefälle*/, "+" /*de:Steigung*/, "An", "Ab", "Funkkanal", "AE" /*de:Abfahrt-Erlaubnis*/, "ETCS", "Streckeninformationen", "R150"));
 
         final List<String> footnoteTexts = new ArrayList<>();
         for (DigitalDrivingOrderEntry entry : digitalDrivingOrder.getEntries()) {
@@ -117,13 +119,13 @@ public class PdfHelper {
         addCell(table, entry.getKm() == null ? StringUtils.EMPTY : entry.getKm().toString());
         addCell(table, entry.getGefaelle() == null ? StringUtils.EMPTY : entry.getGefaelle().toString());
         addCell(table, entry.getSteigung() == null ? StringUtils.EMPTY : entry.getSteigung().toString());
+        addCell(table, entry.getAn());
+        addCell(table, entry.getAb());
         addCell(table, entry.getFunkkanal());
         addCell(table, entry.getAbfahrtsErlaubnis());
         addCell(table, entry.getEtcs());
         table.addCell(toPlaceData(entry));
         addCell(table, entry.getStreckenR150());
-        addCell(table, entry.getAn());
-        addCell(table, entry.getAb());
 
         return footnoteTexts;
     }

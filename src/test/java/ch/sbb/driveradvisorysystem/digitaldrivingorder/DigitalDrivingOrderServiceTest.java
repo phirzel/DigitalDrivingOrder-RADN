@@ -28,6 +28,7 @@ class DigitalDrivingOrderServiceTest {
         assertThat(strecke101.getStreckenId()).isEqualTo("101");
         assertThat(strecke101.getTeilstrecken().getTeilstrecke()).hasSize(3);
 
+        //TODO iterate overall trains for next X hours
         final VehicleJourney vehicleJourney = NetsFpsParser.toJourneyPlanner(/*"src/test/resources/*/ "NeTS-FPS_IC-1-711.csv", LocalDate.of(2024, 12, 17));
         //TODO move to NetsFpsParserTest
         assertThat(vehicleJourney.getTrainNumber()).isEqualTo("711");
